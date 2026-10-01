@@ -1,0 +1,771 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Jugaad OS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one full-screen desktop. Wallpaper behind, windows above, taskbar along the bottom.
+   Look: warm chai and marigold, like a bazaar signboard, not a grey office OS. */
+:root {
+  --chrome: #fbf3e4; --chrome-fg: #2b2016; --win: #fffcf5; --win-fg: #2b2016; --muted: #7b6a55;
+  --line: #e6d8bf; --bar: #f4e8d0; --accent: #e9930c; --accent-ink: #2a1700; --danger: #c43d2b;
+  --term-bg: #181210; --term-fg: #f4e7d0; --term-dim: #a99679; --shadow: 0 10px 30px rgba(43, 24, 6, .28);
+  --f-display: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+  --f-ui: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --tb: 46px; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chrome: #1e1812; --chrome-fg: #f5ebdc; --win: #272019; --win-fg: #f5ebdc; --muted: #ab9a82;
+    --line: #3d3329; --bar: #322a21; --term-bg: #100c0a; --shadow: 0 10px 34px rgba(0, 0, 0, .55); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chrome: #1e1812; --chrome-fg: #f5ebdc; --win: #272019; --win-fg: #f5ebdc; --muted: #ab9a82;
+  --line: #3d3329; --bar: #322a21; --term-bg: #100c0a; --shadow: 0 10px 34px rgba(0, 0, 0, .55); color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; }
+[hidden] { display: none !important; }
+body { background: var(--chrome); color: var(--chrome-fg); font: 14px/1.4 var(--f-ui); overflow: hidden; }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#os { position: relative; height: 100%; overflow: hidden; user-select: none; -webkit-user-select: none; }
+
+/* wallpapers */
+#desk { position: absolute; inset: 0; }
+.wp0 { background: repeating-radial-gradient(circle at 50% 118%, rgba(255, 196, 60, .2) 0 2px, transparent 2px 24px), linear-gradient(135deg, #3a0f2e, #7a1d3f 55%, #d9531e); }
+.wp1 { background: repeating-linear-gradient(100deg, rgba(255, 255, 255, .07) 0 1px, transparent 1px 15px), linear-gradient(180deg, #0e2a3b, #1f5b6e 60%, #7fb7a4); }
+.wp2 { background: radial-gradient(rgba(255, 255, 255, .22) 1.6px, transparent 1.8px) 0 0 / 20px 20px, linear-gradient(160deg, #f6c445, #e8870c 60%, #b8480e); }
+.wp3 { background: radial-gradient(circle at 18% 30%, #fff 0 1px, transparent 1.5px), radial-gradient(circle at 72% 18%, #fff 0 1px, transparent 1.5px), radial-gradient(circle at 44% 62%, #fff 0 1px, transparent 1.5px), radial-gradient(circle at 86% 70%, #fff 0 1px, transparent 1.5px), linear-gradient(180deg, #0b0b1a, #1b1840 70%, #33275e); }
+
+/* app tiles */
+.tile { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: hsl(var(--h) 72% 50%); color: #fff; font: 700 13px/1 var(--f-display); letter-spacing: -.02em; }
+.tile.sm { width: 20px; height: 20px; border-radius: 6px; font-size: 10px; }
+.tile.lg { width: 48px; height: 48px; border-radius: 13px; font-size: 19px; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+
+/* desktop icons */
+.icons { position: absolute; inset: 0 0 var(--tb) 0; padding: 14px; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 6px; }
+.ico { width: 88px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 1px solid transparent; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 500; text-shadow: 0 1px 3px rgba(0, 0, 0, .75); text-align: center; }
+.ico:hover { background: rgba(255, 255, 255, .12); }
+.ico:focus-visible, .ico:focus { background: rgba(255, 255, 255, .2); border-color: rgba(255, 255, 255, .55); outline: none; }
+.refresh .ico { animation: blink .35s; }
+@keyframes blink { 0% { opacity: 1 } 40% { opacity: 0 } 100% { opacity: 1 } }
+
+/* windows */
+#wins { position: absolute; inset: 0 0 var(--tb) 0; z-index: 1; pointer-events: none; }
+.win { position: absolute; display: flex; flex-direction: column; background: var(--win); color: var(--win-fg); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); pointer-events: auto; overflow: hidden; user-select: text; -webkit-user-select: text; }
+.win.active { box-shadow: 0 14px 40px rgba(30, 14, 0, .42); border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.win.max { left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; border-width: 0; }
+.bar { flex: none; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 8px; background: var(--bar); touch-action: none; cursor: default; user-select: none; -webkit-user-select: none; }
+.win.active .bar { background: color-mix(in srgb, var(--accent) 20%, var(--bar)); }
+.ttl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px var(--f-display); }
+.wb { width: 30px; height: 26px; display: grid; place-items: center; background: none; border: 0; border-radius: 6px; font-size: 15px; line-height: 1; }
+.wb:hover { background: var(--line); }
+.wb.x:hover { background: var(--danger); color: #fff; }
+.wbody { flex: 1; min-height: 0; overflow: auto; position: relative; }
+.rz { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; touch-action: none; background: linear-gradient(135deg, transparent 55%, var(--muted) 55% 62%, transparent 62% 72%, var(--muted) 72% 79%, transparent 79%); opacity: .6; }
+.win.max .rz { display: none; }
+@media (max-width: 720px) {
+  .win { left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; border-width: 0; }
+  .rz, .wb.mx { display: none; }
+  #wifi { display: none; }
+  .task span.lbl { display: none; }
+}
+
+/* taskbar and start */
+#taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: var(--tb); z-index: 4000; display: flex; align-items: center; gap: 8px; padding: 0 8px; background: var(--chrome); border-top: 1px solid var(--line); }
+#startBtn { flex: none; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 10px; border: 0; border-radius: 17px; background: var(--accent); color: var(--accent-ink); font: 700 14px var(--f-display); }
+#startBtn:hover { filter: brightness(1.07); }
+.sdot { width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0 3px, var(--accent-ink) 3.5px 5px, var(--accent) 5.5px 7px, var(--accent-ink) 7.5px); }
+#tasks { flex: 1; min-width: 0; display: flex; gap: 6px; overflow: hidden; }
+.task { flex: 0 1 170px; min-width: 40px; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid transparent; border-radius: 8px; background: none; text-align: left; }
+.task .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.task:hover { background: var(--line); }
+.task.on { background: var(--bar); border-color: var(--line); box-shadow: inset 0 -3px 0 var(--accent); }
+#tray { flex: none; display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; }
+.tray-i { padding: 4px 8px; background: none; border: 0; border-radius: 6px; color: inherit; white-space: nowrap; }
+button.tray-i:hover { background: var(--line); }
+#clock { font-variant-numeric: tabular-nums; color: var(--chrome-fg); font-weight: 600; }
+#start { position: absolute; left: 8px; bottom: calc(var(--tb) + 8px); z-index: 4500; width: min(360px, calc(100% - 16px)); background: var(--chrome); color: var(--chrome-fg); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 10px; }
+.shead { padding: 6px 8px 10px; font: 600 12px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.sitem { display: flex; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: 8px; background: none; text-align: left; }
+.sitem:hover, .sitem:focus-visible { background: var(--bar); }
+.sfoot { display: flex; gap: 8px; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.sbtn { flex: 1; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--win); }
+.sbtn:hover { background: var(--bar); }
+
+/* helper surfaces */
+.ctx { position: absolute; z-index: 4600; min-width: 190px; padding: 5px; background: var(--chrome); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.ctx button { display: block; width: 100%; padding: 7px 10px; border: 0; border-radius: 6px; background: none; text-align: left; }
+.ctx button:hover { background: var(--bar); }
+#toasts { position: absolute; right: 12px; bottom: calc(var(--tb) + 10px); z-index: 8000; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: none; }
+.toast { max-width: 300px; padding: 10px 14px; border-radius: 10px; background: var(--chrome-fg); color: var(--chrome); box-shadow: var(--shadow); font-size: 13px; animation: rise .25s ease-out; }
+@keyframes rise { from { transform: translateY(8px); opacity: 0 } }
+#chintu { position: absolute; right: 12px; bottom: calc(var(--tb) + 12px); z-index: 7000; width: min(290px, calc(100% - 24px)); display: flex; gap: 10px; padding: 12px; background: var(--win); color: var(--win-fg); border: 1px solid var(--line); border-radius: 14px 14px 4px 14px; box-shadow: var(--shadow); animation: rise .3s ease-out; user-select: text; }
+#chintu .say { flex: 1; min-width: 0; font-size: 13px; }
+#chintu .say b { display: block; font: 700 12px var(--f-display); margin-bottom: 2px; }
+#chintu .row { display: flex; gap: 8px; margin-top: 8px; }
+#chintu .row button { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bar); font-size: 12px; }
+#chintu .row button.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+.scrim { position: absolute; inset: 0; z-index: 9000; background: rgba(0, 0, 0, .35); display: grid; place-items: center; padding: 16px; }
+.dlg { width: min(380px, 100%); background: var(--win); color: var(--win-fg); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; user-select: text; }
+.dlg h3 { margin: 0; padding: 10px 14px; background: var(--bar); font: 600 13px var(--f-display); }
+.dlg p { margin: 0; padding: 18px 14px; }
+.dlg .row { display: flex; justify-content: flex-end; gap: 8px; padding: 0 14px 14px; }
+.dlg button { padding: 6px 16px; border-radius: 7px; border: 1px solid var(--line); background: var(--bar); }
+.dlg button:first-child { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+
+/* boot, off, crash (deliberately their own look) */
+#boot, #off, #bsod { position: absolute; inset: 0; z-index: 9500; display: grid; place-items: center; text-align: center; padding: 24px; }
+#boot { background: #17100b; color: #f6e8cf; }
+#boot .logo { font: 800 clamp(34px, 8vw, 56px)/1 var(--f-display); letter-spacing: -.03em; display: flex; align-items: center; gap: 14px; justify-content: center; }
+#boot .logo i { width: 54px; height: 54px; border-radius: 15px; display: grid; place-items: center; background: #e9930c; color: #2a1700; font-style: normal; font-size: 32px; }
+#bootbar { width: min(300px, 80vw); height: 6px; margin: 28px auto 12px; border-radius: 3px; background: #3a2c20; overflow: hidden; }
+#bootbar span { display: block; height: 100%; width: 0; background: #e9930c; transition: width .5s ease-out; }
+#bootmsg { min-height: 20px; font-size: 13px; color: #cdb99a; }
+#boot small { display: block; margin-top: 26px; color: #8a7760; font-size: 12px; }
+#off { background: #000; color: #e9a63c; font: 500 15px var(--f-mono); }
+#bsod { background: #1456c8; color: #fff; text-align: left; justify-items: start; align-content: center; }
+#bsod .in { width: min(640px, 100%); margin: 0 auto; }
+#bsod .face { font: 500 clamp(72px, 16vw, 130px)/1 var(--f-display); }
+#bsod p { margin: 14px 0; font-size: clamp(16px, 3vw, 22px); }
+#bsod small { display: block; font: 12px/1.6 var(--f-mono); opacity: .9; }
+
+/* terminal */
+.term { height: 100%; padding: 10px 12px; background: var(--term-bg); color: var(--term-fg); font: 13px/1.5 var(--f-mono); cursor: text; }
+.tl { white-space: pre-wrap; word-break: break-word; }
+.tl.dim { color: var(--term-dim); }
+.tl.cmd { color: var(--accent); }
+.tline { display: flex; gap: 8px; }
+.tprompt { flex: none; color: #8ccf7e; }
+.tin { flex: 1; min-width: 0; padding: 0; background: none; border: 0; outline: none; color: inherit; font: inherit; caret-color: var(--accent); user-select: text; }
+
+/* notes, viewer */
+.notes { display: flex; flex-direction: column; height: 100%; }
+.notes textarea { flex: 1; width: 100%; padding: 14px; resize: none; border: 0; outline: none; background: var(--win); color: var(--win-fg); font: 14px/1.6 var(--f-mono); }
+.notes .st { padding: 5px 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.viewer pre { margin: 0; padding: 16px; white-space: pre-wrap; font: 13px/1.6 var(--f-mono); }
+
+/* calculator */
+.calc { display: flex; flex-direction: column; height: 100%; padding: 12px; gap: 10px; outline: none; }
+.cscr { padding: 10px 14px; text-align: right; background: var(--bar); border-radius: 10px; min-height: 76px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+.cex { min-height: 18px; color: var(--muted); font: 13px var(--f-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cval { font: 600 34px/1.15 var(--f-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cval.sm { font-size: 18px; }
+.cpad { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cpad button { border: 0; border-radius: 9px; background: var(--bar); font: 600 18px var(--f-display); }
+.cpad button:hover { background: var(--line); }
+.cpad button.op { background: color-mix(in srgb, var(--accent) 28%, var(--bar)); }
+.cpad button.eq { background: var(--accent); color: var(--accent-ink); }
+
+/* paint */
+.paint { display: flex; flex-direction: column; height: 100%; }
+.ptools { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--bar); }
+.sw { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--win); box-shadow: 0 0 0 1px var(--line); padding: 0; }
+.sw.on { box-shadow: 0 0 0 2px var(--accent); }
+.ptools button.t { padding: 4px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--win); font-size: 12px; }
+.ptools button.t.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.ptools input[type=range] { width: 90px; accent-color: var(--accent); }
+.pwrap { flex: 1; min-height: 0; overflow: auto; background: var(--line); padding: 10px; }
+.pwrap canvas { display: block; width: 100%; max-width: 900px; height: auto; background: #fff; border-radius: 4px; touch-action: none; cursor: crosshair; }
+
+/* snake */
+.snake { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; height: 100%; outline: none; background: #1a130d; color: #f4e7d0; }
+.shud { display: flex; gap: 20px; font: 600 13px var(--f-mono); }
+.snake canvas { width: min(100%, 320px); height: auto; border-radius: 6px; touch-action: none; }
+.dpad { display: none; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 6px; }
+.dpad button { border: 0; border-radius: 10px; background: #3a2c20; color: #f4e7d0; font-size: 18px; }
+.dpad .u { grid-column: 2; } .dpad .l { grid-row: 2; grid-column: 1; } .dpad .d { grid-row: 2; grid-column: 2; } .dpad .r { grid-row: 2; grid-column: 3; }
+@media (pointer: coarse) { .dpad { display: grid; } }
+
+/* files */
+.files { display: flex; flex-direction: column; height: 100%; }
+.fbar { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--bar); }
+.fbar button { padding: 4px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--win); }
+.fpath { font: 13px var(--f-mono); color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flist { flex: 1; overflow: auto; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; align-content: start; }
+.fitem { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border: 1px solid transparent; border-radius: 8px; background: none; font-size: 12px; text-align: center; word-break: break-word; }
+.fitem:focus, .fitem:hover { background: var(--bar); border-color: var(--line); outline: none; }
+.fempty { padding: 24px; color: var(--muted); }
+
+/* settings, kachra, browser */
+.pane { padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.pane h4 { margin: 0 0 8px; font: 700 11px var(--f-display); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.wps { display: flex; flex-wrap: wrap; gap: 10px; }
+.wpt { width: 86px; height: 56px; border-radius: 8px; border: 2px solid var(--line); position: relative; padding: 0; overflow: hidden; }
+.wpt.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.wpt span { position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 4px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 10px; }
+.pane select { padding: 6px 8px; border-radius: 7px; border: 1px solid var(--line); background: var(--win); color: var(--win-fg); }
+.pane label { display: flex; align-items: center; gap: 8px; }
+.pane label input { accent-color: var(--accent); }
+.krow { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.krow span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.krow button, .kbar button { padding: 4px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--bar); }
+.kbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bar); border-bottom: 1px solid var(--line); }
+.web { display: flex; flex-direction: column; height: 100%; }
+.wbar { flex: none; display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--line); background: var(--bar); }
+.wbar button { flex: none; padding: 4px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--win); }
+.wbar input { flex: 1; min-width: 0; padding: 5px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--win); color: var(--win-fg); font: 13px var(--f-mono); user-select: text; }
+.wpage { flex: 1; overflow: auto; padding: 22px 20px; }
+.wpage h1 { margin: 0 0 12px; font: 800 34px/1.05 var(--f-display); letter-spacing: -.02em; }
+.wpage h2 { margin: 0 0 6px; font: 700 18px var(--f-display); }
+.wpage p { max-width: 62ch; }
+.wpage .sform { display: flex; gap: 8px; max-width: 480px; margin: 14px 0; }
+.wpage .sform input { flex: 1; min-width: 0; padding: 9px 14px; border: 1px solid var(--line); border-radius: 20px; background: var(--win); color: var(--win-fg); }
+.wpage .sform button, .wpage .links button { padding: 8px 16px; border-radius: 20px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.wpage .links { display: flex; gap: 8px; flex-wrap: wrap; }
+.wpage .links button { background: var(--bar); color: var(--win-fg); border: 1px solid var(--line); }
+.res { display: block; width: 100%; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; }
+.res b { display: block; color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.res small { color: var(--muted); font-family: var(--f-mono); }
+.big { font: 800 56px/1 var(--f-display); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+</head><body><div id="os">
+  <div id="desk" class="wp0"><div class="icons" id="icons"></div></div>
+  <div id="wins"></div>
+  <div id="start" hidden>
+    <div class="shead">Apps</div>
+    <div class="sgrid" id="sgrid"></div>
+    <div class="sfoot"><button type="button" class="sbtn" id="sRestart">Restart</button><button type="button" class="sbtn" id="sOff">Shut down</button></div>
+  </div>
+  <div id="taskbar">
+    <button type="button" id="startBtn" aria-expanded="false" aria-controls="start"><span class="sdot"></span><span>Jugaad</span></button>
+    <div id="tasks"></div>
+    <div id="tray"><span class="tray-i" id="wifi">WiFi: Padosi ka</span><button type="button" class="tray-i" id="batt" aria-label="Battery">100% jugaad</button><span class="tray-i" id="clock"></span></div>
+  </div>
+  <div id="chintu" hidden><span class="tile" style="--h:20">C</span><div class="say"><b>Chintu</b><span id="chSay"></span><div class="row" id="chRow"></div></div></div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="ctx" class="ctx" hidden></div>
+  <div id="boot"><div><div class="logo"><i>J</i>Jugaad OS</div><div id="bootbar"><span></span></div><div id="bootmsg"></div><small>Tap or press any key to skip. Runs on chai, hope and a borrowed pendrive.</small></div></div>
+  <div id="off" hidden><div>It is now safe to turn off your computer.<br><br>(Tap or press any key to switch it on again.)</div></div>
+  <div id="bsod" hidden><div class="in"><div class="face">:(</div><p>Your PC ran into a problem and needs to restart. We are collecting some error info, then we will ask a cousin.</p><p id="bsPct">0% complete</p><small>Stop code: JUGAAD_NOT_FOUND<br>What failed: sifarish.sys<br>Tap or press any key to restart sooner.</small></div></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const rnd = (n) => Math.floor(Math.random() * n);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('jos_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('jos_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const small = () => window.innerWidth < 720;
+const coarse = () => !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+const root = document.documentElement;
+const initialTheme = root.getAttribute('data-theme');
+const deskH = () => $('#wins').clientHeight || 500;
+
+/* ---------- virtual file system ---------- */
+const D = (c) => ({ t: 'd', c }), F = (s) => ({ t: 'f', s }), X = (app) => ({ t: 'x', app });
+const FS = D({
+  'readme.txt': F('Welcome to Jugaad OS 1.0.\n\nThis is a pretend operating system that runs inside your browser tab. Nothing here touches your real files.\n\nTry the Terminal, Snake and Chai Browser.\nWhen anything breaks, type: jugaad\n'),
+  'Documents': D({
+    'resume.txt': F('NAME: Fresher\nEXPERIENCE: 5 years (every job post asks for this)\nSKILLS: Excel, Ctrl+C, Ctrl+V, confidence\nHOBBIES: sleeping, planning to wake up early\n'),
+    'chai-recipe.txt': F('1. Boil water.\n2. Add tea, ginger and elaichi.\n3. Add milk.\n4. Wait for it to rise. Do not look away.\n5. Look away. It overflows.\n6. Clean the stove.\n7. Repeat tomorrow.\n'),
+    'todo.txt': F('[x] make todo list\n[ ] everything else\n'),
+    'excuses.txt': F('- network issue\n- server was down (my server)\n- it works on my machine\n- Mercury is in retrograde\n')
+  }),
+  'Pictures': D({
+    'selfie_final_FINAL2.jpg': F('[image: a thumb over one third of the lens, a very nice ceiling fan]'),
+    'sunset.png': F('[image: the same sunset everyone else posted]')
+  }),
+  'Games': D({ 'snake.exe': X('snake'), 'paint.exe': X('paint') }),
+  'Kachra': D({ 'ex_ka_number.txt': F('Deleted. Memorised anyway.'), 'gym_plan_2019.pdf': F('Day 1: Start Monday.') })
+});
+function resolve(cwd, p) {
+  let parts = p.startsWith('/') ? [] : cwd.slice();
+  if (p === '~' || p.startsWith('~/')) { parts = []; p = p.slice(1); }
+  for (const s of p.split('/')) { if (!s || s === '.') continue; if (s === '..') parts.pop(); else parts.push(s); }
+  let n = FS;
+  for (const s of parts) { if (n.t !== 'd' || !n.c[s]) return null; n = n.c[s]; }
+  return { parts, n };
+}
+
+/* ---------- windows ---------- */
+const APPS = {};
+const wins = new Map();
+let nid = 0, zc = 10, active = null;
+const hueOf = (id) => (APPS[id] || { hue: 30 }).hue;
+function tile(id, cls) { const t = el('span', 'tile' + (cls ? ' ' + cls : ''), APPS[id].glyph); t.style.setProperty('--h', hueOf(id)); return t; }
+
+function renderTasks() {
+  const box = $('#tasks'); box.textContent = '';
+  for (const w of wins.values()) {
+    const b = el('button', 'task' + (w === active && !w.mini ? ' on' : ''));
+    b.type = 'button'; b.title = w.title;
+    b.append(tile(w.app, 'sm'), el('span', 'lbl', w.title));
+    b.addEventListener('click', () => { if (w.mini) { restore(w); focusWin(w); } else if (w === active) minimize(w); else focusWin(w); });
+    box.append(b);
+  }
+}
+function focusWin(w) {
+  if (!w || !w.alive) return;
+  active = w; w.root.style.zIndex = ++zc;
+  for (const o of wins.values()) o.root.classList.toggle('active', o === w);
+  renderTasks();
+  if (w.onFocus) w.onFocus();
+}
+function topWin() { let best = null, bz = -1; for (const w of wins.values()) if (!w.mini && +w.root.style.zIndex > bz) { best = w; bz = +w.root.style.zIndex; } return best; }
+function minimize(w) { w.mini = true; w.root.hidden = true; if (active === w) { active = null; const t = topWin(); if (t) focusWin(t); } renderTasks(); }
+function restore(w) { w.mini = false; w.root.hidden = false; }
+function toggleMax(w) { if (small()) return; w.max = !w.max; w.root.classList.toggle('max', w.max); if (w.onResize) w.onResize(); }
+function closeWin(w) {
+  if (!w.alive) return;
+  w.alive = false; if (w.onClose) w.onClose();
+  w.root.remove(); wins.delete(w.id);
+  if (active === w) { active = null; const t = topWin(); if (t) focusWin(t); }
+  renderTasks();
+}
+function closeAll() { for (const w of Array.from(wins.values())) closeWin(w); }
+
+function openApp(id, arg) {
+  const A = APPS[id]; if (!A) return null;
+  closeStart(); hideCtx();
+  if (A.single) for (const w of wins.values()) if (w.app === id) { restore(w); focusWin(w); if (arg && w.onArg) w.onArg(arg); return w; }
+  const w = { id: ++nid, app: id, alive: true, mini: false, max: false, title: A.name };
+  const r = el('div', 'win'); w.root = r;
+  const bar = el('div', 'bar'), ttl = el('span', 'ttl', A.name);
+  const bm = el('button', 'wb', '–'), bx = el('button', 'wb mx', '▢'), bc = el('button', 'wb x', '×');
+  bm.type = bx.type = bc.type = 'button';
+  bm.setAttribute('aria-label', 'Minimise'); bx.setAttribute('aria-label', 'Maximise'); bc.setAttribute('aria-label', 'Close');
+  bar.append(tile(id, 'sm'), ttl, bm, bx, bc);
+  const body = el('div', 'wbody'), rz = el('div', 'rz');
+  r.append(bar, body, rz); w.body = body;
+  w.setTitle = (t) => { w.title = t; ttl.textContent = t; renderTasks(); };
+  const W = Math.min(A.w, window.innerWidth - 24), H = Math.min(A.h, deskH() - 20), off = (wins.size % 7) * 28;
+  r.style.width = W + 'px'; r.style.height = H + 'px';
+  r.style.left = Math.max(8, Math.min(window.innerWidth - W - 8, 100 + off)) + 'px';
+  r.style.top = Math.max(8, Math.min(deskH() - H - 8, 24 + off)) + 'px';
+  wins.set(w.id, w); $('#wins').append(r);
+  r.addEventListener('pointerdown', () => { if (active !== w) focusWin(w); }, true);
+  bm.addEventListener('click', () => minimize(w)); bx.addEventListener('click', () => toggleMax(w)); bc.addEventListener('click', () => closeWin(w));
+  bar.addEventListener('dblclick', (e) => { if (!e.target.closest('.wb')) toggleMax(w); });
+  bar.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.wb') || w.max || small()) return;
+    const sx = e.clientX, sy = e.clientY, ox = r.offsetLeft, oy = r.offsetTop;
+    try { bar.setPointerCapture(e.pointerId); } catch (x) {}
+    const mv = (ev) => {
+      r.style.left = Math.min(Math.max(ox + ev.clientX - sx, 80 - r.offsetWidth), window.innerWidth - 80) + 'px';
+      r.style.top = Math.min(Math.max(oy + ev.clientY - sy, 0), deskH() - 34) + 'px';
+    };
+    const up = () => { bar.removeEventListener('pointermove', mv); bar.removeEventListener('pointerup', up); bar.removeEventListener('pointercancel', up); };
+    bar.addEventListener('pointermove', mv); bar.addEventListener('pointerup', up); bar.addEventListener('pointercancel', up);
+  });
+  rz.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, ow = r.offsetWidth, oh = r.offsetHeight;
+    try { rz.setPointerCapture(e.pointerId); } catch (x) {}
+    const mv = (ev) => {
+      r.style.width = Math.max(260, ow + ev.clientX - sx) + 'px'; r.style.height = Math.max(180, oh + ev.clientY - sy) + 'px';
+      if (w.onResize) w.onResize();
+    };
+    const up = () => { rz.removeEventListener('pointermove', mv); rz.removeEventListener('pointerup', up); rz.removeEventListener('pointercancel', up); };
+    rz.addEventListener('pointermove', mv); rz.addEventListener('pointerup', up); rz.addEventListener('pointercancel', up);
+  });
+  A.build(w, arg);
+  focusWin(w);
+  return w;
+}
+
+/* ---------- small UI helpers ---------- */
+function toast(msg) {
+  const t = el('div', 'toast', msg); $('#toasts').append(t);
+  setTimeout(() => t.remove(), 3400);
+}
+function dialog(title, msg, btns) {
+  const s = el('div', 'scrim'), d = el('div', 'dlg'), row = el('div', 'row');
+  d.setAttribute('role', 'alertdialog');
+  d.append(el('h3', '', title), el('p', '', msg), row);
+  (btns || [['OK']]).forEach(([label, fn]) => {
+    const b = el('button', '', label); b.type = 'button';
+    b.addEventListener('click', () => { s.remove(); if (fn) fn(); });
+    row.append(b);
+  });
+  s.append(d); $('#os').append(s);
+  const f = row.firstChild; if (f) f.focus();
+}
+function activate(btn, fn) {
+  btn.addEventListener('click', (e) => { if (e.detail === 0 || coarse()) fn(); });
+  btn.addEventListener('dblclick', fn);
+}
+
+/* ---------- Chintu, the helpful assistant ---------- */
+let chTimer = 0, chOn = store.get('chintu', true);
+function chintu(msg, label, fn) {
+  if (!chOn) return;
+  $('#chSay').textContent = msg;
+  const row = $('#chRow'); row.textContent = '';
+  if (label) { const g = el('button', 'go', label); g.type = 'button'; g.addEventListener('click', () => { $('#chintu').hidden = true; fn(); }); row.append(g); }
+  const x = el('button', '', 'Dismiss'); x.type = 'button'; x.addEventListener('click', () => { $('#chintu').hidden = true; });
+  row.append(x);
+  $('#chintu').hidden = false;
+  clearTimeout(chTimer); chTimer = setTimeout(() => { $('#chintu').hidden = true; }, 14000);
+}
+const TIPS = [
+  () => chintu('It looks like you are procrastinating. Shall I open Snake?', 'Open Snake', () => openApp('snake')),
+  () => chintu('Tip: double-click a window title bar to maximise it.'),
+  () => chintu('Tip: right-click the desktop to change the wallpaper.'),
+  () => chintu('Fun fact: the Kachra can restore nothing. Try it.', 'Open Kachra', () => openApp('kachra')),
+  () => chintu('Need help? Open the Terminal and type: help', 'Open Terminal', () => openApp('term')),
+  () => chintu('Your battery is at 100%. It has been 100% since 1.0.')
+];
+function tipLoop() { clearInterval(tipLoop.t); tipLoop.t = setInterval(() => { if (chOn && $('#boot').hidden && $('#bsod').hidden && $('#off').hidden) pick(TIPS)(); }, 55000); }
+
+/* ---------- boot, shutdown, crash ---------- */
+let bootToken = 0, bootStart = 0, bsTimer = 0;
+const hideOverlays = () => { $('#boot').hidden = true; $('#off').hidden = true; $('#bsod').hidden = true; };
+function boot() {
+  const my = ++bootToken; closeAll(); closeStart(); hideOverlays(); clearInterval(bsTimer);
+  $('#boot').hidden = false; bootStart = Date.now();
+  const bar = $('#bootbar span'), msg = $('#bootmsg'); bar.style.width = '4%'; msg.textContent = 'Starting up';
+  const steps = [[20, 'Boiling the chai', 500], [52, 'Mounting the jugaad drive', 1100], [80, 'Negotiating with WiFi (Padosi ka)', 1800], [99, 'Almost there. Just one more minute.', 2600], [100, 'Namaste.', 3900]];
+  steps.forEach(([p, m, t]) => setTimeout(() => { if (my === bootToken && !$('#boot').hidden) { bar.style.width = p + '%'; msg.textContent = m; if (p === 100) finish(); } }, t));
+  function finish() {
+    if (my !== bootToken) return; bootToken++; $('#boot').hidden = true; bootStart = Date.now();
+    toast('Jugaad OS 1.0 is ready.');
+    setTimeout(() => chintu('Namaste! Open the Terminal and type "help", or just click around.', 'Open Terminal', () => openApp('term')), 5000);
+  }
+  boot.skip = () => { if (my === bootToken && Date.now() - bootStart > 600) finish(); };
+}
+function shutdown() { closeAll(); closeStart(); hideOverlays(); $('#chintu').hidden = true; $('#off').hidden = false; }
+function crash() {
+  closeAll(); closeStart(); hideOverlays(); $('#chintu').hidden = true; $('#bsod').hidden = false;
+  let p = 0; const lab = $('#bsPct'); lab.textContent = '0% complete';
+  clearInterval(bsTimer);
+  bsTimer = setInterval(() => { p += 5 + rnd(10); if (p >= 100) { clearInterval(bsTimer); boot(); } else lab.textContent = p + '% complete'; }, 450);
+}
+document.addEventListener('pointerdown', () => { if (!$('#boot').hidden && boot.skip) boot.skip(); if (!$('#bsod').hidden) { clearInterval(bsTimer); boot(); } else if (!$('#off').hidden) boot(); }, true);
+document.addEventListener('keydown', () => { if (!$('#boot').hidden && boot.skip) boot.skip(); else if (!$('#bsod').hidden) { clearInterval(bsTimer); boot(); } else if (!$('#off').hidden) boot(); }, true);
+
+/* ---------- start menu, desktop, context menu ---------- */
+const LAUNCH = ['term', 'files', 'notes', 'calc', 'paint', 'snake', 'web', 'kachra', 'settings'];
+function closeStart() { $('#start').hidden = true; $('#startBtn').setAttribute('aria-expanded', 'false'); }
+function hideCtx() { $('#ctx').hidden = true; }
+$('#startBtn').addEventListener('click', (e) => { e.stopPropagation(); hideCtx(); const o = $('#start').hidden; $('#start').hidden = !o; $('#startBtn').setAttribute('aria-expanded', String(o)); });
+$('#start').addEventListener('click', (e) => e.stopPropagation());
+document.addEventListener('click', () => { closeStart(); hideCtx(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeStart(); hideCtx(); } });
+$('#sRestart').addEventListener('click', () => { closeStart(); boot(); });
+$('#sOff').addEventListener('click', () => { closeStart(); shutdown(); });
+function buildLaunchers() {
+  LAUNCH.forEach((id) => {
+    const s = el('button', 'sitem'); s.type = 'button'; s.append(tile(id), el('span', '', APPS[id].name));
+    s.addEventListener('click', () => openApp(id)); $('#sgrid').append(s);
+  });
+  ['term', 'files', 'notes', 'snake', 'web', 'kachra'].forEach((id) => {
+    const b = el('button', 'ico'); b.type = 'button'; b.append(tile(id, 'lg'), el('span', '', APPS[id].desk || APPS[id].name));
+    activate(b, () => openApp(id)); $('#icons').append(b);
+  });
+}
+const WALLS = ['Rangoli', 'Monsoon', 'Haldi', 'Raat'];
+let wall = store.get('wall', 0);
+function setWall(i) { wall = i; store.set('wall', i); $('#desk').className = 'wp' + i; document.querySelectorAll('.wpt').forEach((b, k) => b.classList.toggle('on', k === i)); }
+$('#desk').addEventListener('contextmenu', (e) => {
+  e.preventDefault(); closeStart();
+  const c = $('#ctx'); c.textContent = '';
+  [['Refresh', () => { const d = $('#desk'); d.classList.add('refresh'); setTimeout(() => d.classList.remove('refresh'), 400); }],
+   ['Next wallpaper', () => setWall((wall + 1) % WALLS.length)],
+   ['Settings', () => openApp('settings')],
+   ['Format C: (please do not)', () => dialog('Format C:', 'Formatting 0%... just kidding. There is no C: here, only vibes.')]
+  ].forEach(([l, f]) => { const b = el('button', '', l); b.type = 'button'; b.addEventListener('click', f); c.append(b); });
+  c.hidden = false;
+  c.style.left = Math.min(e.clientX, window.innerWidth - 210) + 'px'; c.style.top = Math.min(e.clientY, window.innerHeight - 190) + 'px';
+});
+const BATT = ['100%. Unplug it, it will still say 100%.', 'Charging... from a phone charger, a laptop charger and hope.', 'Battery health: excellent. Battery life: philosophical.'];
+let bi = 0; $('#batt').addEventListener('click', () => toast(BATT[bi++ % BATT.length]));
+const tick = () => { $('#clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
+tick(); setInterval(tick, 10000);
+
+/* ======================= APPS ======================= */
+
+/* Terminal */
+APPS.term = { name: 'Terminal', desk: 'Terminal', glyph: '>_', hue: 22, w: 640, h: 420, build(w) {
+  const b = w.body; b.classList.add('term');
+  const out = el('div'), line = el('div', 'tline'), pr = el('span', 'tprompt'), inp = el('input', 'tin');
+  inp.id = 'tin' + w.id; inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.spellcheck = false; inp.setAttribute('aria-label', 'Terminal input');
+  line.append(pr, inp); b.append(out, line);
+  let cwd = [], hist = [], hi = 0;
+  const prompt = () => 'jugaad:' + (cwd.length ? '~/' + cwd.join('/') : '~') + '$';
+  const print = (t, cls) => { const d = el('div', 'tl' + (cls ? ' ' + cls : ''), t); out.append(d); b.scrollTop = b.scrollHeight; };
+  const setP = () => { pr.textContent = prompt(); };
+  w.onFocus = () => inp.focus(); w.onClose = () => { w.timers.forEach(clearInterval); }; w.timers = [];
+  b.addEventListener('click', () => { if (!String(window.getSelection())) inp.focus(); });
+  print('Jugaad OS 1.0 (Chai LTS). Type "help" to see what works. Mostly.', 'dim'); setP();
+  const cmds = {
+    help() { print('help  ls  cd  cat  pwd  echo  open  clear  date  whoami  uname  neofetch  fortune  chai  hack  ping  history  theme  jugaad  crash  reboot  shutdown  exit'); },
+    ls(a) { const r = resolve(cwd, a[0] || '.'); if (!r) return print('ls: no such place: ' + a[0]); if (r.n.t !== 'd') return print(a[0]); print(Object.keys(r.n.c).map((k) => r.n.c[k].t === 'd' ? k + '/' : k).join('  ') || '(empty, like my wallet)'); },
+    cd(a) { if (!a[0]) { cwd = []; return setP(); } const r = resolve(cwd, a[0]); if (!r || r.n.t !== 'd') return print('cd: not a folder: ' + a[0]); cwd = r.parts; setP(); },
+    pwd() { print('/home/user' + (cwd.length ? '/' + cwd.join('/') : '')); },
+    cat(a) { if (!a[0]) return print('cat: which file, boss?'); const r = resolve(cwd, a[0]); if (!r) return print('cat: no such file: ' + a[0]); if (r.n.t === 'd') return print('cat: that is a folder, not a book'); print(r.n.t === 'f' ? r.n.s : '[binary: tries its best]'); },
+    echo(a) { print(a.join(' ')); },
+    open(a) {
+      if (!a[0]) return print('open: open what? Try: open snake');
+      const n = a[0].toLowerCase();
+      const map = { terminal: 'term', term: 'term', files: 'files', notes: 'notes', calc: 'calc', calculator: 'calc', paint: 'paint', snake: 'snake', browser: 'web', web: 'web', chai: 'web', kachra: 'kachra', settings: 'settings' };
+      if (map[n]) { openApp(map[n]); print('Opening ' + APPS[map[n]].name + '...'); return; }
+      const r = resolve(cwd, a[0]);
+      if (r && r.n.t === 'x') return openApp(r.n.app);
+      if (r && r.n.t === 'f') return openApp('viewer', { name: a[0], text: r.n.s });
+      print('open: I do not know "' + a[0] + '"');
+    },
+    clear() { out.textContent = ''; },
+    date() { print(new Date().toString()); },
+    whoami() { print('boss'); },
+    uname() { print('JugaadOS 1.0 sifarish-5.0 x86_chai'); },
+    neofetch() {
+      const up = Math.max(1, Math.round((Date.now() - bootStart) / 60000));
+      print('   ( (        boss@jugaad\n    ) )       -----------\n  .______.    OS: Jugaad OS 1.0 (Chai LTS)\n  |      |]   Kernel: Sifarish 5.0\n  \\      /    Uptime: ' + up + ' min\n   `----\'     RAM: 4 GB (borrowed)\n              Shell: jsh\n              Battery: 100% (jugaad)');
+    },
+    fortune() { print(pick(['A bug fixed on Friday is a bug created on Monday.', 'The meeting could have been an email. The email could have been silence.', 'Your WiFi will work right after you restart it for the third time.', 'Great things take time. So does the loading bar.', 'You will soon receive a forward that says Good Morning.'])); },
+    chai() { print('   ( (\n    ) )\n  .______.\n  |      |]\n  \\      /\n   `----\'\nChai is ready. Sugar? Obviously.'); },
+    hack() {
+      const steps = ['Locating target (Sharma ji ka WiFi)...', 'Bypassing firewall (it was open)...', 'Guessing password: 12345678 ... found', 'Downloading 4 GB of cat photos...', 'Access granted.', 'Just kidding. Go touch grass.'];
+      let i = 0; const t = setInterval(() => { if (!w.alive) return clearInterval(t); print(steps[i++]); if (i >= steps.length) clearInterval(t); }, 600); w.timers.push(t);
+    },
+    ping(a) { const h = a[0] || 'google.com'; let i = 0; const t = setInterval(() => { if (!w.alive) return clearInterval(t); print(i < 3 ? 'Reply from ' + h + ': time=' + (20 + rnd(400)) + 'ms (via cousin)' : 'Request timed out. Try again after chai.'); if (++i >= 4) clearInterval(t); }, 500); w.timers.push(t); },
+    history() { hist.forEach((h, i) => print((i + 1) + '  ' + h)); },
+    theme(a) { if (a[0] === 'dark' || a[0] === 'light') { root.setAttribute('data-theme', a[0]); print('Theme: ' + a[0]); } else print('theme: say dark or light'); },
+    jugaad() { print('Applying jugaad...\n[x] tape on the screen\n[x] restarted it\n[x] blamed the network\nFixed. (Not really.)'); },
+    sudo() { print('Nice try. Even sudo needs a sifarish.'); },
+    rm(a) { if (a.join(' ').replace(/\s+/g, ' ').trim() === '-rf /') { print('Deleting everything...'); setTimeout(crash, 700); } else print('rm: refusing. Try asking nicely, or try the Kachra.'); },
+    crash() { crash(); },
+    reboot() { boot(); },
+    shutdown() { shutdown(); },
+    exit() { closeWin(w); }
+  };
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = inp.value.trim(); inp.value = '';
+      print(prompt() + ' ' + v, 'cmd');
+      if (v) { hist.push(v); hi = hist.length;
+        const parts = v.split(/\s+/), c = parts[0], f = cmds[c];
+        if (f && Object.prototype.hasOwnProperty.call(cmds, c)) f(parts.slice(1)); else print('jugaad: ' + c + ': command not found. Try asking a cousin.');
+      }
+      b.scrollTop = b.scrollHeight;
+    } else if (e.key === 'ArrowUp') { if (hi > 0) inp.value = hist[--hi]; e.preventDefault(); }
+    else if (e.key === 'ArrowDown') { inp.value = hi < hist.length - 1 ? hist[++hi] : ''; hi = Math.min(hi, hist.length); e.preventDefault(); }
+  });
+  setTimeout(() => inp.focus(), 30);
+} };
+
+/* Notes */
+APPS.notes = { name: 'Notes', desk: 'Notes', glyph: 'Nt', hue: 45, w: 480, h: 360, single: true, build(w) {
+  const b = w.body; b.classList.add('notes');
+  const ta = el('textarea'); ta.id = 'notes' + w.id; ta.setAttribute('aria-label', 'Notes');
+  ta.value = store.get('notes', 'Jugaad OS notes. They stay in this browser only.\n\n- buy milk\n- fix the bug that only exists in production\n- call Sharma ji back (do not)\n');
+  const st = el('div', 'st', 'Saved in this browser'); b.append(ta, st);
+  let t = 0; ta.addEventListener('input', () => { st.textContent = 'Typing...'; clearTimeout(t); t = setTimeout(() => { store.set('notes', ta.value); st.textContent = 'Saved in this browser'; }, 400); });
+  w.onFocus = () => ta.focus();
+} };
+APPS.viewer = { name: 'Viewer', glyph: 'Tx', hue: 200, w: 440, h: 300, build(w, arg) {
+  w.body.classList.add('viewer'); const p = el('pre', '', arg ? arg.text : ''); w.body.append(p); if (arg) w.setTitle(arg.name);
+} };
+
+/* Calculator */
+APPS.calc = { name: 'Calculator', desk: 'Calculator', glyph: '±', hue: 160, w: 300, h: 420, single: true, build(w) {
+  const b = w.body; b.classList.add('calc'); b.tabIndex = 0;
+  const scr = el('div', 'cscr'), ex = el('div', 'cex'), val = el('div', 'cval', '0'); scr.append(ex, val);
+  const pad = el('div', 'cpad'); b.append(scr, pad);
+  let expr = '', cur = '0', fresh = false, justOp = false;
+  const show = () => { ex.textContent = expr; val.textContent = cur; val.classList.toggle('sm', cur.length > 12); };
+  const calc = () => {
+    const s = (expr + cur).replace(/÷/g, '/').replace(/×/g, '*').replace(/−/g, '-');
+    if (!/^[0-9+\-*/. ]+$/.test(s)) return;
+    let r; try { r = Function('"use strict";return (' + s + ')')(); } catch (e) { r = NaN; }
+    if (!isFinite(r)) cur = 'Bhai, nahi ho payega'; else cur = String(+r.toFixed(10));
+    expr = ''; fresh = true; justOp = false; show();
+  };
+  const press = (k) => {
+    if (/^[0-9]$/.test(k)) { if (fresh) { cur = '0'; fresh = false; } cur = cur === '0' ? k : cur + k; justOp = false; }
+    else if (k === '.') { if (fresh) { cur = '0'; fresh = false; } if (!cur.includes('.')) cur += '.'; justOp = false; }
+    else if ('+−×÷'.includes(k)) { if (isNaN(parseFloat(cur))) cur = '0'; if (justOp) expr = expr.slice(0, -2) + k + ' '; else { expr += cur + ' ' + k + ' '; cur = '0'; } justOp = true; fresh = false; }
+    else if (k === '=') return calc();
+    else if (k === 'C') { expr = ''; cur = '0'; fresh = false; justOp = false; }
+    else if (k === '⌫') { cur = cur.length > 1 && !fresh ? cur.slice(0, -1) : '0'; if (cur === '-') cur = '0'; }
+    else if (k === '%') { cur = String(parseFloat(cur) / 100 || 0); }
+    else if (k === '±') { if (cur !== '0') cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur; }
+    show();
+  };
+  [['C'], ['⌫'], ['%'], ['÷', 'op'], ['7'], ['8'], ['9'], ['×', 'op'], ['4'], ['5'], ['6'], ['−', 'op'], ['1'], ['2'], ['3'], ['+', 'op'], ['±'], ['0'], ['.'], ['=', 'eq']].forEach(([k, c]) => {
+    const x = el('button', c || '', k); x.type = 'button'; x.addEventListener('click', () => press(k)); pad.append(x);
+  });
+  b.addEventListener('keydown', (e) => {
+    const m = { '*': '×', '/': '÷', '-': '−', '+': '+', Enter: '=', '=': '=', Backspace: '⌫', Escape: 'C', '%': '%', '.': '.' };
+    const k = /^[0-9]$/.test(e.key) ? e.key : m[e.key]; if (k) { e.preventDefault(); press(k); }
+  });
+  w.onFocus = () => b.focus({ preventScroll: true });
+} };
+
+/* Paint */
+APPS.paint = { name: 'Paint', desk: 'Paint', glyph: 'Pt', hue: 330, w: 620, h: 460, build(w) {
+  const b = w.body; b.classList.add('paint');
+  const tools = el('div', 'ptools'), wrap = el('div', 'pwrap'), cv = el('canvas');
+  cv.width = 900; cv.height = 600; wrap.append(cv); b.append(tools, wrap);
+  const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 900, 600); g.lineCap = 'round'; g.lineJoin = 'round';
+  let color = '#c43d2b', size = 6, erase = false;
+  const sws = [];
+  ['#c43d2b', '#e9930c', '#f2c94c', '#3a8a4a', '#2f6fdd', '#7a3fb0', '#1c1410'].forEach((c) => {
+    const s = el('button', 'sw' + (c === color ? ' on' : '')); s.type = 'button'; s.style.background = c; s.setAttribute('aria-label', 'Colour ' + c);
+    s.addEventListener('click', () => { color = c; erase = false; sws.forEach((x) => x.classList.toggle('on', x === s)); eb.classList.remove('on'); }); sws.push(s); tools.append(s);
+  });
+  const rg = el('input'); rg.type = 'range'; rg.min = 2; rg.max = 40; rg.value = size; rg.id = 'psz' + w.id; rg.setAttribute('aria-label', 'Brush size'); rg.addEventListener('input', () => { size = +rg.value; });
+  const eb = el('button', 't', 'Eraser'); eb.type = 'button'; eb.addEventListener('click', () => { erase = !erase; eb.classList.toggle('on', erase); });
+  const cb = el('button', 't', 'Clear'); cb.type = 'button'; cb.addEventListener('click', () => { g.fillStyle = '#fff'; g.fillRect(0, 0, 900, 600); });
+  tools.append(rg, eb, cb);
+  let down = false, lx = 0, ly = 0;
+  const pos = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * 900 / r.width, (e.clientY - r.top) * 600 / r.height]; };
+  cv.addEventListener('pointerdown', (e) => { down = true; [lx, ly] = pos(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {} stroke(lx, ly, lx + .01, ly); });
+  cv.addEventListener('pointermove', (e) => { if (!down) return; const [x, y] = pos(e); stroke(lx, ly, x, y); lx = x; ly = y; });
+  const end = () => { down = false; }; cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  function stroke(a, c, d, f) { g.strokeStyle = erase ? '#fff' : color; g.lineWidth = erase ? size * 2 : size; g.beginPath(); g.moveTo(a, c); g.lineTo(d, f); g.stroke(); }
+} };
+
+/* Snake */
+APPS.snake = { name: 'Snake', desk: 'Snake', glyph: 'Sn', hue: 105, w: 360, h: 470, single: true, build(w) {
+  const b = w.body; b.classList.add('snake'); b.tabIndex = 0;
+  const hud = el('div', 'shud'), sc = el('span'), hs = el('span'); hud.append(sc, hs);
+  const cv = el('canvas'); cv.width = cv.height = 320; const g = cv.getContext('2d');
+  const dp = el('div', 'dpad'); b.append(hud, cv, dp);
+  [['u', '↑', 0, -1], ['l', '←', -1, 0], ['d', '↓', 0, 1], ['r', '→', 1, 0]].forEach(([c, t, x, y]) => { const k = el('button', c, t); k.type = 'button'; k.setAttribute('aria-label', 'Move ' + c); k.addEventListener('click', () => turn(x, y)); dp.append(k); });
+  const N = 20, S = 16; let sn, dir, nd, food, score, dead, run = false, best = store.get('snake', 0);
+  const reset = () => { sn = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }]; dir = { x: 1, y: 0 }; nd = dir; score = 0; dead = false; run = false; place(); draw(); };
+  const place = () => { do { food = { x: rnd(N), y: rnd(N) }; } while (sn.some((s) => s.x === food.x && s.y === food.y)); };
+  const draw = () => {
+    const ac = getComputedStyle(root).getPropertyValue('--accent').trim() || '#e9930c';
+    g.fillStyle = '#241a12'; g.fillRect(0, 0, 320, 320);
+    g.fillStyle = '#e0452f'; g.beginPath(); g.arc(food.x * S + 8, food.y * S + 8, 6, 0, 6.283); g.fill();
+    sn.forEach((s, i) => { g.fillStyle = i ? ac : '#fff3d6'; g.fillRect(s.x * S + 1, s.y * S + 1, S - 2, S - 2); });
+    sc.textContent = 'Score ' + score; hs.textContent = 'Best ' + best;
+    if (!run || dead) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 120, 320, 80); g.fillStyle = '#f4e7d0'; g.font = '600 15px ' + getComputedStyle(root).getPropertyValue('--f-mono'); g.textAlign = 'center'; g.fillText(dead ? 'Game over. Any arrow to retry.' : 'Press an arrow key to start', 160, 165); }
+  };
+  const step = () => {
+    if (!run || dead || w.root.hidden) return; dir = nd;
+    const h = { x: sn[0].x + dir.x, y: sn[0].y + dir.y };
+    if (h.x < 0 || h.y < 0 || h.x >= N || h.y >= N || sn.some((s) => s.x === h.x && s.y === h.y)) { dead = true; if (score > best) { best = score; store.set('snake', best); } return draw(); }
+    sn.unshift(h); if (h.x === food.x && h.y === food.y) { score++; place(); } else sn.pop(); draw();
+  };
+  function turn(x, y) { if (dead) { reset(); } if (x === -dir.x && y === -dir.y && sn.length > 1) return; nd = { x, y }; run = true; }
+  b.addEventListener('keydown', (e) => {
+    const m = { ArrowUp: [0, -1], w: [0, -1], ArrowDown: [0, 1], s: [0, 1], ArrowLeft: [-1, 0], a: [-1, 0], ArrowRight: [1, 0], d: [1, 0] }[e.key];
+    if (m) { e.preventDefault(); turn(m[0], m[1]); }
+  });
+  let sx = 0, sy = 0;
+  cv.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
+  cv.addEventListener('pointerup', (e) => { const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return; if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0); else turn(0, dy > 0 ? 1 : -1); });
+  const iv = setInterval(step, 110); w.onClose = () => clearInterval(iv);
+  w.onFocus = () => b.focus({ preventScroll: true });
+  reset();
+} };
+
+/* Files */
+APPS.files = { name: 'Mera Computer', desk: 'Mera Computer', glyph: 'Fl', hue: 205, w: 520, h: 380, build(w) {
+  const b = w.body; b.classList.add('files');
+  const bar = el('div', 'fbar'), up = el('button', '', 'Up'), pt = el('span', 'fpath'), list = el('div', 'flist');
+  up.type = 'button'; bar.append(up, pt); b.append(bar, list);
+  let cwd = [];
+  const go = () => {
+    const r = resolve([], cwd.join('/')); pt.textContent = '/home/user' + (cwd.length ? '/' + cwd.join('/') : ''); list.textContent = '';
+    const keys = Object.keys(r.n.c); if (!keys.length) list.append(el('div', 'fempty', 'Empty. Like the fridge at 2 am.'));
+    keys.forEach((k) => {
+      const n = r.n.c[k], it = el('button', 'fitem'); it.type = 'button';
+      const t = el('span', 'tile lg', n.t === 'd' ? 'Dr' : n.t === 'x' ? 'Ex' : 'Tx'); t.style.setProperty('--h', n.t === 'd' ? 38 : n.t === 'x' ? 140 : 210);
+      it.append(t, el('span', '', k));
+      activate(it, () => { if (n.t === 'd') { cwd.push(k); go(); } else if (n.t === 'x') openApp(n.app); else openApp('viewer', { name: k, text: n.s }); });
+      list.append(it);
+    });
+  };
+  up.addEventListener('click', () => { cwd.pop(); go(); }); go();
+} };
+
+/* Kachra (recycle bin) */
+APPS.kachra = { name: 'Kachra', desk: 'Kachra', glyph: 'Kc', hue: 0, w: 460, h: 340, single: true, build(w) {
+  const b = w.body; const bar = el('div', 'kbar'), info = el('span', '', 'Things you deleted but did not forget'), em = el('button', '', 'Empty Kachra'); em.type = 'button'; bar.append(info, em);
+  const list = el('div'); b.append(bar, list);
+  let items = ['ex_ka_number.txt', 'Gym membership.pdf', 'Diet plan (day 1).doc', 'Old resume v47.docx', 'Motivation.mp3'];
+  const FAIL = ['This item has moved on in life.', 'Item refused. It says it needs space.', 'Too late. Sharma ji already has it.', 'Restore failed: you will not read it anyway.'];
+  const render = () => {
+    list.textContent = ''; if (!items.length) { list.append(el('div', 'fempty', 'Kachra is empty. Your problems are not.')); return; }
+    items.forEach((n) => { const r = el('div', 'krow'), s = el('span', '', n), x = el('button', '', 'Restore'); x.type = 'button'; x.addEventListener('click', () => dialog('Cannot restore', pick(FAIL))); r.append(s, x); list.append(r); });
+  };
+  em.addEventListener('click', () => { if (!items.length) return dialog('Kachra', 'Already empty. Nothing to see here.'); dialog('Are you sure?', 'This cannot be undone. Neither can your last haircut.', [['Yes, empty it', () => { items = []; render(); }], ['Wait, no']]); });
+  render();
+} };
+
+/* Chai Browser */
+APPS.web = { name: 'Chai Browser', desk: 'Chai Browser', glyph: 'Ch', hue: 12, w: 560, h: 420, single: true, build(w) {
+  const b = w.body; b.classList.add('web');
+  const bar = el('div', 'wbar'), back = el('button', '', '←'), home = el('button', '', 'Home'), url = el('input'), page = el('div', 'wpage');
+  back.type = home.type = 'button'; back.setAttribute('aria-label', 'Back'); url.id = 'url' + w.id; url.setAttribute('aria-label', 'Address'); url.spellcheck = false; url.autocomplete = 'off';
+  bar.append(back, home, url); b.append(bar, page);
+  const hist = [];
+  const link = (label, to) => { const x = el('button', '', label); x.type = 'button'; x.addEventListener('click', () => go(to)); return x; };
+  const form = (q) => { const f = el('form', 'sform'), i = el('input'), s = el('button', '', 'Search'); i.id = 'q' + w.id + Math.floor(Math.random() * 1e5); i.setAttribute('aria-label', 'Search Chai'); i.value = q || ''; i.placeholder = 'Search anything. Results may vary.'; s.type = 'submit'; f.append(i, s); f.addEventListener('submit', (e) => { e.preventDefault(); if (i.value.trim()) go('chai://search?q=' + encodeURIComponent(i.value.trim())); }); return f; };
+  const PAGES = {
+    'chai://news': () => { const d = el('div'); d.append(el('h1', '', 'Chai News')); ['Local man\'s WiFi stops working exactly when guests arrive', 'Uncle forwards 400th Good Morning image of the week', 'Startup pivots to chai, valuation up 3x', 'Monday announced again, citizens unprepared', 'Area aunty already knows who you are dating'].forEach((t) => d.append(el('h2', '', t), el('p', '', 'Sources close to the matter say they were also surprised.'))); return d; },
+    'chai://weather': () => { const d = el('div'); d.append(el('h1', '', 'Weather'), el('div', 'big', '34°C'), el('p', '', 'Feels like 41°C. Conditions: humid. Also humid. Rain expected right after you hang the laundry.'), el('p', '', 'Source: Aunty on the balcony.')); return d; },
+    'chai://shop': () => { const d = el('div'); d.append(el('h1', '', 'Bazaar')); [['Charger that actually works', '₹999', 'out of stock'], ['Original duplicate watch', '₹499', '2 left'], ['Extension board for the extension board', '₹349', 'in stock'], ['Pressure cooker (3 whistles)', '₹1,299', 'in stock']].forEach(([n, p, s]) => d.append(el('h2', '', n + ' · ' + p), el('p', '', s + '. Delivery in 3 to 30 days.'))); return d; },
+    'chai://jobs': () => { const d = el('div'); d.append(el('h1', '', 'Jobs'), el('h2', '', 'Fresher with 5 years of experience'), el('p', '', 'Must be a self-starter, a team player and available at 2 am.'), el('h2', '', 'Intern (unpaid, passionate)'), el('p', '', 'Exposure will be provided. Rent will not.')); return d; }
+  };
+  const go = (u, push = true) => {
+    u = (u || '').trim(); if (!u) return;
+    if (!u.startsWith('chai://')) u = 'chai://search?q=' + encodeURIComponent(u);
+    if (push) hist.push(u);
+    url.value = u; page.textContent = ''; page.scrollTop = 0;
+    if (u === 'chai://home') {
+      page.append(el('h1', '', 'Chai Search'), el('p', '', 'The search engine that tries its best.'), form(''));
+      const l = el('div', 'links'); [['News', 'chai://news'], ['Weather', 'chai://weather'], ['Bazaar', 'chai://shop'], ['Jobs', 'chai://jobs']].forEach(([a, c]) => l.append(link(a, c))); page.append(l);
+    } else if (PAGES[u]) { page.append(PAGES[u]()); }
+    else if (u.startsWith('chai://search')) {
+      let q = ''; try { q = decodeURIComponent(u.split('q=')[1] || ''); } catch (e) { q = ''; }
+      page.append(form(q), el('p', '', 'About 4 results (0.003 seconds, plus 20 minutes of thinking)'));
+      [[q + ' - Wikipedia (probably)', 'a sincere attempt'], ['Top 10 reasons ' + q + ' is overrated', 'you will not believe number 7'], [q + ' near me', '3 km away, closed today'], ['Is ' + q + ' safe? Ask Sharma ji', 'he has opinions']].forEach(([t, s], i) => {
+        const r = el('button', 'res'); r.type = 'button'; r.append(el('b', '', t), el('small', '', 'chai://result/' + (i + 1)), el('div', '', s)); r.addEventListener('click', () => go('chai://result/' + (i + 1) + '?q=' + encodeURIComponent(q))); page.append(r);
+      });
+    } else if (u.startsWith('chai://result')) {
+      let q = ''; try { q = decodeURIComponent(u.split('q=')[1] || ''); } catch (e) { q = ''; }
+      page.append(el('h1', '', q || 'Result'), el('p', '', 'This page has been read by 1 person, who did not finish it.'), el('p', '', 'Experts disagree. The experts are also the people who disagree. Scroll for more content that is not coming.'), link('Back to search', 'chai://search?q=' + encodeURIComponent(q)));
+    } else { page.append(el('h1', '', 'Page not found'), el('p', '', 'Try again after chai.'), link('Go home', 'chai://home')); }
+  };
+  back.addEventListener('click', () => { if (hist.length > 1) { hist.pop(); go(hist[hist.length - 1], false); } });
+  home.addEventListener('click', () => go('chai://home'));
+  url.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(url.value); });
+  go('chai://home');
+} };
+
+/* Settings */
+const ACCENTS = [['Marigold', '#e9930c', '#2a1700'], ['Mehendi', '#4d8c3b', '#ffffff'], ['Rani pink', '#d6336c', '#ffffff'], ['Neel', '#2f6fdd', '#ffffff']];
+function setAccent(i) { const a = ACCENTS[i]; root.style.setProperty('--accent', a[1]); root.style.setProperty('--accent-ink', a[2]); store.set('accent', i); document.querySelectorAll('.accsw').forEach((s, k) => s.classList.toggle('on', k === i)); }
+APPS.settings = { name: 'Settings', desk: 'Settings', glyph: 'Cg', hue: 250, w: 480, h: 440, single: true, build(w) {
+  const b = w.body; const p = el('div', 'pane'); b.append(p);
+  const sec = (t) => { const s = el('div'); s.append(el('h4', '', t)); p.append(s); return s; };
+  const s1 = sec('Wallpaper'), ws = el('div', 'wps'); s1.append(ws);
+  WALLS.forEach((n, i) => { const t = el('button', 'wpt wp' + i + (i === wall ? ' on' : '')); t.type = 'button'; t.append(el('span', '', n)); t.addEventListener('click', () => setWall(i)); ws.append(t); });
+  const s2 = sec('Accent colour'), as = el('div', 'wps'); s2.append(as);
+  const ai = store.get('accent', 0);
+  ACCENTS.forEach((a, i) => { const t = el('button', 'sw accsw' + (i === ai ? ' on' : '')); t.type = 'button'; t.style.background = a[1]; t.setAttribute('aria-label', a[0]); t.title = a[0]; t.addEventListener('click', () => setAccent(i)); as.append(t); });
+  const s3 = sec('Appearance'), sel = el('select'); sel.id = 'theme' + w.id; sel.setAttribute('aria-label', 'Appearance');
+  [['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].forEach(([v, l]) => { const o = el('option', '', l); o.value = v; sel.append(o); });
+  sel.value = root.getAttribute('data-theme') === 'dark' || root.getAttribute('data-theme') === 'light' ? root.getAttribute('data-theme') : 'system';
+  sel.addEventListener('change', () => { if (sel.value === 'system') { if (initialTheme) root.setAttribute('data-theme', initialTheme); else root.removeAttribute('data-theme'); } else root.setAttribute('data-theme', sel.value); });
+  s3.append(sel);
+  const s4 = sec('Chintu'), lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = 'chk' + w.id; cb.checked = chOn;
+  cb.addEventListener('change', () => { chOn = cb.checked; store.set('chintu', chOn); if (!chOn) $('#chintu').hidden = true; });
+  lab.append(cb, el('span', '', 'Let Chintu give me helpful tips')); s4.append(lab);
+  const s5 = sec('Performance'), pf = el('select'); pf.id = 'perf' + w.id; pf.setAttribute('aria-label', 'Performance');
+  ['Jugaad', 'Ultra Jugaad', 'Maximum Jugaad'].forEach((n) => pf.append(el('option', '', n)));
+  pf.addEventListener('change', () => toast('Performance unchanged. Extra tape applied.')); s5.append(pf);
+  const s6 = sec('About'); s6.append(el('div', '', 'Jugaad OS 1.0 (Chai LTS). Runs entirely in this browser tab. Open source, from Getnomik Labs.'));
+} };
+
+/* ---------- start ---------- */
+buildLaunchers(); setWall(wall); setAccent(store.get('accent', 0)); tipLoop(); boot();
+if (window.__JOS_TEST) window.__JOS = { openApp, wins, boot, crash, shutdown, toast, dialog };
+window.__jos = { openApp, boot };
+})();
+</script>
+</body></html>
